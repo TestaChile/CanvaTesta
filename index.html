@@ -720,12 +720,59 @@
                 });
             }
 
-            // Reposition dimensions panel to ensure it stays inside the layout
+            // Reposition elements to ensure they keep relative positions across devices
             const panel = layout ? layout.querySelector('.dimensions-panel') : null;
+
+            // Set positions responsively based on a reference design size (refW x refH).
+            // This computes percentages from reference pixel positions so elements keep
+            // their relative placement regardless of actual device size.
+            function setResponsivePositions() {
+                if (!layout) return;
+                const refW = 720; // reference design width used in media queries
+                const refH = 1280; // reference design height used in media queries
+                const rect = layout.getBoundingClientRect();
+                const w = Math.max(1, rect.width);
+                const h = Math.max(1, rect.height);
+                const pxToPercentX = px => Math.min(100, (px / refW) * 100);
+                const pxToPercentY = px => Math.min(100, (px / refH) * 100);
+
+                // product title block (reference: left:25px, top:75px)
+                const product = layout.querySelector('.product-title-block');
+                if (product) {
+                    product.style.left = pxToPercentX(25) + '%';
+                    product.style.top = pxToPercentY(75) + '%';
+                }
+
+                // description block (reference: right:25px, top:524px)
+                const desc = layout.querySelector('.description-block');
+                if (desc) {
+                    desc.style.right = pxToPercentX(25) + '%';
+                    desc.style.top = pxToPercentY(524) + '%';
+                }
+
+                // photo-frame corners (reference offset: 12px)
+                const tl = layout.querySelector('.photo-frame-corner.top-left');
+                const tr = layout.querySelector('.photo-frame-corner.top-right');
+                const bl = layout.querySelector('.photo-frame-corner.bottom-left');
+                const br = layout.querySelector('.photo-frame-corner.bottom-right');
+                const cornerOffsetX = pxToPercentX(12);
+                const cornerOffsetY = pxToPercentY(12);
+                if (tl) { tl.style.left = cornerOffsetX + '%'; tl.style.top = cornerOffsetY + '%'; }
+                if (tr) { tr.style.right = cornerOffsetX + '%'; tr.style.top = cornerOffsetY + '%'; }
+                if (bl) { bl.style.left = cornerOffsetX + '%'; bl.style.bottom = cornerOffsetY + '%'; }
+                if (br) { br.style.right = cornerOffsetX + '%'; br.style.bottom = cornerOffsetY + '%'; }
+
+                // logo: keep its left percentage but adjust top relative to ref height (original top:30px)
+                const logo = layout.querySelector('.logo');
+                if (logo) logo.style.top = pxToPercentY(30) + '%';
+            }
+
+            // Reposition dimensions panel to ensure it stays inside the layout
             function clampPanelPosition() {
                 if (!layout || !panel) return;
-                const desiredLeftPx = 25; // user-specified (updated)
-                const desiredTopPx = 520; // user-specified (updated)
+                // Use reference pixel positions so behavior matches the responsive placement
+                const desiredLeftPx = 35; // reference left in px
+                const desiredTopPx = 780; // reference top in px
                 const panelH = panel.offsetHeight || 100;
                 const maxTopPx = Math.max(0, layout.clientHeight - panelH - 10);
                 const clampedTopPx = Math.min(desiredTopPx, maxTopPx);
@@ -744,9 +791,13 @@
                 const heightPx = Math.max(40, Math.floor(sizePx * 0.75));
                 panel.style.height = heightPx + 'px';
             }
-            // Run once and on resize
+            // Run once and on resize: set responsive positions first, then clamp panel
+            setResponsivePositions();
             clampPanelPosition();
-            window.addEventListener('resize', clampPanelPosition);
+            window.addEventListener('resize', () => {
+                setResponsivePositions();
+                clampPanelPosition();
+            });
 
             // El logo ahora se posiciona solo con CSS sobre el título
         });
