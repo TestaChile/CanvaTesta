@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <script type="module" src="https://unpkg.com/@google/model-viewer@2.1.1/dist/model-viewer.min.js"></script>
     <style>
+        html, body { height: 100%; }
         body {
             background: #e0e0e0;
             margin: 0;
@@ -424,6 +425,8 @@
             justify-content: center;
             align-items: flex-start; /* align top so scaled layout starts at top */
             transform-origin: top center;
+            /* ensure wrapper doesn't create its own scrollbars */
+            overflow: hidden;
         }
     </style>
 </head>
@@ -810,26 +813,49 @@
             });
 
             // Fit the layout vertically into the viewport by scaling the wrapper when needed
+            // Use visualViewport (when available) because mobile Safari adjusts the visual
+            // viewport when the address/toolbars are visible.
             function fitLayoutToViewport() {
                 const wrapper = document.querySelector('.canva-wrapper');
                 const layoutEl = document.querySelector('.canva-container');
                 if (!wrapper || !layoutEl) return;
-                const layoutRect = layoutEl.getBoundingClientRect();
-                const layoutH = layoutRect.height || layoutEl.offsetHeight;
-                const vH = window.innerHeight;
-                // compute scale so that the layout height fits into the viewport
-                const scale = Math.min(1, vH / layoutH);
+
+                // Use offsetHeight (stable) for the layout size
+                const layoutH = layoutEl.offsetHeight || layoutEl.getBoundingClientRect().height;
+                const layoutW = layoutEl.offsetWidth || layoutEl.getBoundingClientRect().width;
+
+                // Prefer visualViewport height when available (handles Safari chrome)
+                const vH = (window.visualViewport && window.visualViewport.height) || window.innerHeight || document.documentElement.clientHeight;
+
+                // compute scale so that the layout height fits into the visible viewport
+                const scale = Math.min(1, Math.max(0.5, vH / layoutH));
+
+                // Apply transform and also set explicit wrapper size to prevent page scroll
                 wrapper.style.transform = `scale(${scale})`;
-                // set wrapper height to the scaled layout height to avoid extra page space
                 wrapper.style.height = (layoutH * scale) + 'px';
-                // when scaled down, disable page scroll to ensure full view; otherwise restore
-                document.body.style.overflow = scale < 1 ? 'hidden' : 'auto';
+                wrapper.style.width = (layoutW * scale) + 'px';
+
+                // When scaled down, hide page scroll to lock the view. On iOS some extra
+                // adjustments are needed: set html/body height to 100% and overflow hidden.
+                if (scale < 1) {
+                    document.documentElement.style.height = '100%';
+                    document.body.style.height = '100%';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.documentElement.style.height = '';
+                    document.body.style.height = '';
+                    document.body.style.overflow = '';
+                }
             }
 
-            // Call on load and when the viewport changes
+            // Call on load and when the viewport changes. Also listen to visualViewport resize
             fitLayoutToViewport();
             window.addEventListener('resize', fitLayoutToViewport);
-            window.addEventListener('orientationchange', () => setTimeout(fitLayoutToViewport, 100));
+            window.addEventListener('orientationchange', () => setTimeout(fitLayoutToViewport, 120));
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', fitLayoutToViewport);
+                window.visualViewport.addEventListener('scroll', fitLayoutToViewport);
+            }
 
             // El logo ahora se posiciona solo con CSS sobre el título
         });
