@@ -422,17 +422,48 @@
         .canva-wrapper {
             width: 100%;
             display: flex;
-            justify-content: center;
-            align-items: flex-start; /* align top so scaled layout starts at top */
+            justify-content: flex-start; /* layout at left */
+            align-items: center; /* center vertically */
             transform-origin: top center;
             /* ensure wrapper doesn't create its own scrollbars */
             overflow: hidden;
+        }
+        /* Panel de controles a la derecha del layout */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            margin-left: 12px;
+            align-items: flex-start;
+            z-index: 40;
+        }
+        /* Force controls inside the controls panel to be non-absolute and stacked */
+        .controls-panel button {
+            position: relative !important;
+            left: auto !important;
+            bottom: auto !important;
+            margin: 4px 0;
+            width: 44px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls-panel .color-picker-container,
+        .controls-panel .bg-color-picker-container {
+            position: static !important;
+            display: block !important;
+            background: #fff;
+            padding: 6px;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="canva-wrapper">
-    <div class="canva-container">
+        <div class="canva-layout-area">
+            <div class="canva-container">
         <img src="Logo_TESTA_Original.png" alt="Logo Testa" class="logo">
         <!-- Video de fondo: coloca tu archivo de video en la carpeta del proyecto y renómbralo a "background.mp4" o cambia el src abajo -->
         <video id="bg-video" autoplay muted loop playsinline>
@@ -479,22 +510,25 @@
             <br>
             <span class="product-subtitle">EXHIBIDOR ACRÍLICO</span>
         </div>
+            </div>
+        </div>
+
+        <!-- Controles verticales a la derecha del LayOut -->
+        <div class="controls-panel" aria-label="Controles">
+            <button class="toggle-grid-btn" type="button" aria-pressed="false" title="Mostrar/Ocultar MS Indicator">MS</button>
+            <button class="toggle-frame-btn" type="button" aria-pressed="true" title="Mostrar/Ocultar Frame">F</button>
+            <button class="toggle-color-btn" type="button" aria-pressed="false" title="Cambiar color">🎨</button>
+            <div class="color-picker-container" style="display: none;">
+                <input type="color" id="color-picker" value="#222222">
+            </div>
+            <div class="bg-color-picker-container">
+                <input type="color" id="bg-color-picker" value="#ffffff">
+            </div>
+            <button class="toggle-bg-btn" type="button" aria-pressed="false" title="Color de fondo (BG)">BG</button>
+            <button class="toggle-video-btn" type="button" aria-pressed="false" title="Video de fondo (V)">V</button>
+            <button class="export-video-btn" type="button" title="Exportar video (10s)">Export</button>
+        </div>
     </div>
-    </div>
-    <button class="toggle-grid-btn" type="button" aria-pressed="false" title="Mostrar/Ocultar MS Indicator">MS</button>
-    <!-- Botón para activar/desactivar el Frame -->
-    <button class="toggle-frame-btn" type="button" aria-pressed="true" title="Mostrar/Ocultar Frame">F</button>
-    <!-- Botón para mostrar/ocultar el selector de color -->
-    <button class="toggle-color-btn" type="button" aria-pressed="false" title="Cambiar color">🎨</button>
-    <div class="color-picker-container" style="display: none;">
-        <input type="color" id="color-picker" value="#222222">
-    </div>
-    <div class="bg-color-picker-container">
-        <input type="color" id="bg-color-picker" value="#ffffff">
-    </div>
-    <!-- Botones para BG y Video, a la derecha del selector de color -->
-    <button class="toggle-bg-btn" type="button" aria-pressed="false" title="Color de fondo (BG)">BG</button>
-    <button class="toggle-video-btn" type="button" aria-pressed="false" title="Video de fondo (V)">V</button>
     <!-- Dimensiones panel moved inside layout (see DOM) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -830,10 +864,15 @@
                 // compute scale so that the layout height fits into the visible viewport
                 const scale = Math.min(1, Math.max(0.5, vH / layoutH));
 
-                // Apply transform and also set explicit wrapper size to prevent page scroll
-                wrapper.style.transform = `scale(${scale})`;
-                wrapper.style.height = (layoutH * scale) + 'px';
-                wrapper.style.width = (layoutW * scale) + 'px';
+                // Apply transform to the layout element so controls remain unscaled
+                layoutEl.style.transformOrigin = 'top left';
+                layoutEl.style.transform = `scale(${scale})`;
+                // set the container around the layout to reserve the scaled space
+                const area = document.querySelector('.canva-layout-area');
+                if (area) {
+                    area.style.width = (layoutW * scale) + 'px';
+                    area.style.height = (layoutH * scale) + 'px';
+                }
 
                 // When scaled down, hide page scroll to lock the view. On iOS some extra
                 // adjustments are needed: set html/body height to 100% and overflow hidden.
