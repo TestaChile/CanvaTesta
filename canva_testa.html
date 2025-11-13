@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Canva Testa - Historia 16:9</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script type="module" src="https://unpkg.com/@google/model-viewer@2.1.1/dist/model-viewer.min.js"></script>
+    <style>
+        body {
+            background: #e0e0e0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .canva-container {
+            position: relative;
+            width: 360px;
+            height: 640px;
+            background: #fff;
+            box-shadow: 0 0 32px rgba(0,0,0,0.18);
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (min-width: 540px) {
+            .canva-container {
+                width: 405px;
+                height: 720px;
+            }
+        }
+        @media (min-width: 800px) {
+            .canva-container {
+                width: 540px;
+                height: 960px;
+            }
+        }
+        @media (min-width: 1000px) {
+            .canva-container {
+                width: 720px;
+                height: 1280px;
+            }
+        }
+        .logo {
+            position: absolute;
+            /* Use percentage-based positioning so logo scales with the Layout */
+            top: 7%;
+            left: 15%;
+            /* responsive size: percentage of layout with caps */
+            width: 8%;
+            max-width: 40px;
+            min-width: 24px;
+            height: auto;
+            z-index: 10;
+            opacity: 0.92;
+        }
+        .model-viewer-wrapper {
+            width: 90%;
+            height: 60%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-top: -50px; /* move model-viewer higher */
+        }
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            touch-action: none; /* evitar gestos de scroll/touch */
+        }
+        .dimensions-box {
+            position: absolute;
+            left: 40px;
+            bottom: 18px;
+            /* quitar fondo/rectángulo: solo texto */
+            background: transparent;
+            border-radius: 0;
+        }
+        .toggle-grid-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px 8px;
+            background: #333; /* Color inicial: gris oscuro */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: Consolas, monospace;
+            z-index: 10;
+            transition: background 0.3s ease; /* Transición suave para el cambio de color */
+        }
+        .toggle-grid-btn.active {
+            background: #D35400; /* Naranjo oscuro cuando está activado */
+        }
+        .mouse-position {
+            position: fixed; /* Cambiado a fixed para que siga al mouse sin depender del scroll */
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            z-index: 15;
+        }
+        /* Dimensiones panel */
+        .dimensions-panel {
+            position: absolute; /* will be positioned relative to .canva-container when moved inside */
+            /* initial values will be overwritten by JS to use percentages for responsiveness */
+            left: 35px;
+            top: 780px;
+            max-height: 100px;
+            /* make the panel a compact square by default; JS will set exact size */
+            width: 120px;
+            height: 120px;
+            max-width: 120px;
+            background: transparent; /* no solid fill */
+            font-family: Consolas, monospace;
+            color: #333;
+            z-index: 12;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            overflow: hidden;
+            pointer-events: none; /* allow mouse events to pass through to the layout */
+            border: 1pt solid #000; /* thin black outline instead of solid fill */
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .dimensions-panel .dim-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px; /* un poquito más pequeño */
+            margin-bottom: 6px;
+            color: #111;
+        }
+        .dimensions-panel .dim-values {
+            font-size: 12px; /* reducir tamaño de las medidas para responsividad */
+            color: #444; /* gris oscuro para medidas */
+            line-height: 1.1;
+        }
+        .dimensions-panel .dim-line { margin-bottom: 4px; }
+        .dimensions-panel .dim-label { font-weight: 700; margin-right: 6px; }
+        .dimensions-panel .dim-measure { color: #333; }
+        .description-block {
+            position: absolute;
+            right: 25px;
+            top: 524px;
+            max-width: 180px;
+            font-family: Consolas, monospace;
+            z-index: 12;
+            box-sizing: border-box;
+            pointer-events: none;
+            text-align: right;
+        }
+        .desc-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #111;
+            text-align: right;
+        }
+        .desc-paragraph {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.1;
+            max-height: 70px;
+            overflow: hidden;
+            text-align: right;
+        }
+        .product-title-block {
+            position: absolute;
+            left: 25px;
+            top: 75px;
+            z-index: 15;
+            pointer-events: none;
+        }
+        .product-title {
+            font-family: 'Arial Rounded MT Bold', Arial, Helvetica, sans-serif;
+            font-size: 22px;
+            font-weight: bold;
+            color: #222;
+            letter-spacing: 0.5px;
+        }
+        .product-subtitle {
+            font-family: 'Arial Rounded MT BOLD', Arial, Helvetica, sans-serif;
+            font-size: 18px;
+            font-weight: normal;
+            color: #888;
+            letter-spacing: 0.5px;
+            margin-top: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="canva-container">
+        <img src="Logo_TESTA_Original.png" alt="Logo Testa" class="logo">
+        <div class="model-viewer-wrapper">
+            <model-viewer 
+                src="3dmodels/GLB_StandQR_DOGGY_SNACKS_DT.glb"
+                alt="Modelo 3D"
+                auto-rotate
+                rotation-per-second="80deg"
+                disable-zoom
+                disable-pan
+                interaction-prompt="none"
+                shadow-intensity="1.2"
+                environment-image="environments/studio_country_hall_2k.hdr"
+            ></model-viewer>
+        </div>
+        <div class="dimensions-box">
+            <!-- Aquí puedes agregar texto descriptivo si es necesario -->
+        </div>
+        <!-- Dimensiones del modelo 3D (posicionado INSIDE el Layout) -->
+        <div class="dimensions-panel" aria-label="Dimensiones del modelo">
+            <div class="dim-title">Dimensiones:</div>
+            <div class="dim-values">
+                <div class="dim-line"><span class="dim-label">Alto:</span> <span class="dim-measure">X cm</span></div>
+                <div class="dim-line"><span class="dim-label">Ancho:</span> <span class="dim-measure">X cm</span></div>
+                <div class="dim-line"><span class="dim-label">Largo:</span> <span class="dim-measure">X cm</span></div>
+            </div>
+        </div>
+        <div class="description-block">
+            <div class="desc-title">DESCRIPCIÓN</div>
+            <div class="desc-paragraph">Este es un texto genérico de descripción de producto. Este es un texto genérico de descripción de producto.</div>
+        </div>
+        <div class="product-title-block">
+            <span class="product-title">DOGGY SNACKS</span>
+            <br>
+            <span class="product-subtitle">EXHIBIDOR ACRÍLICO</span>
+        </div>
+    </div>
+    <div class="toggle-grid-btn">Show MS Indicator</div>
+    <!-- Dimensiones panel moved inside layout (see DOM) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const layout = document.querySelector('.canva-container');
+            const toggleBtn = document.querySelector('.toggle-grid-btn');
+
+            // Ensure the indicator exists. Create it if missing.
+            let indicator = document.querySelector('.mouse-position');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.className = 'mouse-position';
+                document.body.appendChild(indicator);
+            }
+
+            // State: whether the MS Indicator feature is enabled (user toggled)
+            let indicatorEnabled = false; // default: disabled per spec
+            // Track whether the mouse is currently inside the Layout
+            let mouseInside = false;
+
+            // Initialize visuals: indicator hidden, button in inactive (grey) state
+            indicator.style.display = 'none';
+            if (toggleBtn) {
+                toggleBtn.classList.remove('active');
+                toggleBtn.textContent = 'MS Indicator';
+            }
+
+            // Mouse listeners on the Layout
+            if (layout) {
+                layout.addEventListener('mousemove', (e) => {
+                    mouseInside = true;
+                    if (!indicatorEnabled) return; // only show/update when enabled
+
+                    const rect = layout.getBoundingClientRect();
+                    const x = Math.round(e.clientX - rect.left);
+                    const y = Math.round(e.clientY - rect.top);
+                    indicator.textContent = `X: ${x}, Y: ${y}`;
+
+                    const offset = 12;
+                    // indicator is fixed, so use client coords
+                    indicator.style.top = `${e.clientY + offset}px`;
+                    indicator.style.left = `${e.clientX + offset}px`;
+                    indicator.style.display = 'block';
+                });
+
+                layout.addEventListener('mouseenter', () => {
+                    mouseInside = true;
+                    if (indicatorEnabled) indicator.style.display = 'block';
+                });
+
+                layout.addEventListener('mouseleave', () => {
+                    mouseInside = false;
+                    // When leaving layout, hide the indicator visually, but keep the enabled state
+                    indicator.style.display = 'none';
+                });
+            }
+
+            // Toggle button behavior: enable/disable the MS Indicator feature
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    indicatorEnabled = !indicatorEnabled;
+                    if (indicatorEnabled) {
+                        toggleBtn.classList.add('active');
+                        // If mouse is currently inside the layout, show the indicator
+                        if (mouseInside) indicator.style.display = 'block';
+                    } else {
+                        toggleBtn.classList.remove('active');
+                        // Hide indicator immediately when disabled
+                        indicator.style.display = 'none';
+                    }
+                });
+            }
+
+            // Reposition dimensions panel to ensure it stays inside the layout
+            const panel = layout ? layout.querySelector('.dimensions-panel') : null;
+            function clampPanelPosition() {
+                if (!layout || !panel) return;
+                const desiredLeftPx = 25; // user-specified (updated)
+                const desiredTopPx = 520; // user-specified (updated)
+                const panelH = panel.offsetHeight || 100;
+                const maxTopPx = Math.max(0, layout.clientHeight - panelH - 10);
+                const clampedTopPx = Math.min(desiredTopPx, maxTopPx);
+
+                // compute left/top as percentages so the panel scales with layout
+                const leftPercent = Math.min( (desiredLeftPx / layout.clientWidth) * 100, 90 );
+                const topPercent = (clampedTopPx / layout.clientHeight) * 100;
+                panel.style.left = leftPercent + '%';
+                panel.style.top = topPercent + '%';
+
+                // set panel size responsively to keep it compact and more square
+                const maxSquare = Math.min(120, Math.floor(layout.clientWidth * 0.3));
+                const sizePx = Math.max(60, maxSquare); // keep a minimum usable size
+                panel.style.width = sizePx + 'px';
+                // make the height slightly smaller than the width (keep width unchanged)
+                const heightPx = Math.max(40, Math.floor(sizePx * 0.75));
+                panel.style.height = heightPx + 'px';
+            }
+            // Run once and on resize
+            clampPanelPosition();
+            window.addEventListener('resize', clampPanelPosition);
+
+            // Position logo by its center at X:25, Y:25 (relative to layout)
+            const logo = layout ? layout.querySelector('.logo') : null;
+            function positionLogoCenter() {
+                if (!layout || !logo) return;
+                // desired center coordinates inside layout
+                const centerX = 25; // px
+                const centerY = 25; // px
+                // get actual size of logo
+                const lw = logo.offsetWidth || 40;
+                const lh = logo.offsetHeight || lw;
+                // compute top-left so that center is at desired coord
+                const leftPx = Math.max(0, centerX - Math.round(lw / 2));
+                const topPx = Math.max(0, centerY - Math.round(lh / 2));
+                logo.style.left = leftPx + 'px';
+                logo.style.top = topPx + 'px';
+            }
+            positionLogoCenter();
+            window.addEventListener('resize', positionLogoCenter);
+        });
+    </script>
+</body>
+</html>
