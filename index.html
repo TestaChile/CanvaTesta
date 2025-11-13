@@ -122,8 +122,8 @@
         .dimensions-panel {
             position: absolute; /* will be positioned relative to .canva-container when moved inside */
             /* initial values will be overwritten by JS to use percentages for responsiveness */
-            left: 35px;
-            top: 780px;
+            left: 15px;
+            top: 680px;
             max-height: 100px;
             /* make the panel a compact square by default; JS will set exact size */
             width: 120px;
@@ -417,9 +417,18 @@
             will-change: transform;
             z-index: 2; /* asegurar que quede visible sobre el video */
         }
+        /* Wrapper que permite escalar todo el layout para que quepa en la altura del viewport */
+        .canva-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* align top so scaled layout starts at top */
+            transform-origin: top center;
+        }
     </style>
 </head>
 <body>
+    <div class="canva-wrapper">
     <div class="canva-container">
         <img src="Logo_TESTA_Original.png" alt="Logo Testa" class="logo">
         <!-- Video de fondo: coloca tu archivo de video en la carpeta del proyecto y renómbralo a "background.mp4" o cambia el src abajo -->
@@ -467,6 +476,7 @@
             <br>
             <span class="product-subtitle">EXHIBIDOR ACRÍLICO</span>
         </div>
+    </div>
     </div>
     <button class="toggle-grid-btn" type="button" aria-pressed="false" title="Mostrar/Ocultar MS Indicator">MS</button>
     <!-- Botón para activar/desactivar el Frame -->
@@ -798,6 +808,28 @@
                 setResponsivePositions();
                 clampPanelPosition();
             });
+
+            // Fit the layout vertically into the viewport by scaling the wrapper when needed
+            function fitLayoutToViewport() {
+                const wrapper = document.querySelector('.canva-wrapper');
+                const layoutEl = document.querySelector('.canva-container');
+                if (!wrapper || !layoutEl) return;
+                const layoutRect = layoutEl.getBoundingClientRect();
+                const layoutH = layoutRect.height || layoutEl.offsetHeight;
+                const vH = window.innerHeight;
+                // compute scale so that the layout height fits into the viewport
+                const scale = Math.min(1, vH / layoutH);
+                wrapper.style.transform = `scale(${scale})`;
+                // set wrapper height to the scaled layout height to avoid extra page space
+                wrapper.style.height = (layoutH * scale) + 'px';
+                // when scaled down, disable page scroll to ensure full view; otherwise restore
+                document.body.style.overflow = scale < 1 ? 'hidden' : 'auto';
+            }
+
+            // Call on load and when the viewport changes
+            fitLayoutToViewport();
+            window.addEventListener('resize', fitLayoutToViewport);
+            window.addEventListener('orientationchange', () => setTimeout(fitLayoutToViewport, 100));
 
             // El logo ahora se posiciona solo con CSS sobre el título
         });
