@@ -10,17 +10,16 @@
             background: #e0e0e0;
             margin: 0;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            /* Eliminar flex y centrar para que el layout ocupe todo el viewport */
         }
         .canva-container {
             position: relative;
-            width: 360px;
-            height: 640px;
+            z-index: 1;
+            width: 100vw;
+            height: 100vh;
             background: #fff;
-            box-shadow: 0 0 32px rgba(0,0,0,0.18);
-            border-radius: 18px;
+            box-shadow: none;
+            border-radius: 0;
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -46,16 +45,16 @@
         }
         .logo {
             position: absolute;
-            /* Use percentage-based positioning so logo scales with the Layout */
-            top: 7%;
-            left: 15%;
-            /* responsive size: percentage of layout with caps */
-            width: 8%;
+            /* Ubicar el logo centrado sobre el título */
+            left: 12%;
+            top: 30px;
+            transform: translateX(-50%);
+            width: 48px;
             max-width: 40px;
-            min-width: 24px;
+            min-width: 32px;
             height: auto;
-            z-index: 10;
-            opacity: 0.92;
+            z-index: 20;
+            opacity: 0.97;
         }
         .model-viewer-wrapper {
             width: 90%;
@@ -81,22 +80,32 @@
         }
         .toggle-grid-btn {
             position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 4px 8px;
-            background: #333; /* Color inicial: gris oscuro */
-            color: white;
+            left: 6px;
+            bottom: 6px;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: 2px;
             cursor: pointer;
             font-size: 10px;
-            font-family: Consolas, monospace;
-            z-index: 10;
-            transition: background 0.3s ease; /* Transición suave para el cambio de color */
+            font-family: 'Consolas', monospace;
+            z-index: 20;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            user-select: none;
+            letter-spacing: 1px;
+            outline: none;
         }
+        
         .toggle-grid-btn.active {
             background: #D35400; /* Naranjo oscuro cuando está activado */
+            color: #fff;
         }
         .mouse-position {
             position: fixed; /* Cambiado a fixed para que siga al mouse sin depender del scroll */
@@ -199,11 +208,231 @@
             letter-spacing: 0.5px;
             margin-top: 1px;
         }
+
+        /* Marco tipo fotografía: esquinas en L */
+        .photo-frame-corner {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 30;
+        }
+        .photo-frame-corner.top-left {
+            top: 12px;
+            left: 12px;
+            border-top: 3px solid #222;
+            border-left: 3px solid #222;
+            border-radius: 6px 0 0 0;
+        }
+        .photo-frame-corner.top-right {
+            top: 12px;
+            right: 12px;
+            border-top: 3px solid #222;
+            border-right: 3px solid #222;
+            border-radius: 0 6px 0 0;
+        }
+        .photo-frame-corner.bottom-left {
+            bottom: 12px;
+            left: 12px;
+            border-bottom: 3px solid #222;
+            border-left: 3px solid #222;
+            border-radius: 0 0 0 6px;
+        }
+        .photo-frame-corner.bottom-right {
+            bottom: 12px;
+            right: 12px;
+            border-bottom: 3px solid #222;
+            border-right: 3px solid #222;
+            border-radius: 0 0 6px 0;
+        }
+
+        /* Botón toggle para el Frame, igual al de MS */
+        .toggle-frame-btn {
+            position: absolute;
+            left: 32px;
+            bottom: 6px;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Consolas', monospace;
+            z-index: 20;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            user-select: none;
+            letter-spacing: 1px;
+            outline: none;
+        }
+        .toggle-frame-btn.active {
+            background: #D35400;
+            color: #fff;
+        }
+
+        /* Botón para el selector de color */
+        .toggle-color-btn {
+            position: absolute;
+            left: 58px;
+            bottom: 6px;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Consolas', monospace;
+            z-index: 20;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            user-select: none;
+            letter-spacing: 1px;
+            outline: none;
+        }
+        .toggle-color-btn.active {
+            background: #D35400;
+            color: #fff;
+        }
+
+        /* Botón para seleccionar color de fondo (BG) y botón para activar video (V)
+           Colocados a la derecha del selector de color existente */
+        .toggle-bg-btn {
+            position: absolute;
+            left: 84px;
+            bottom: 6px;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Consolas', monospace;
+            z-index: 20;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            user-select: none;
+            letter-spacing: 1px;
+            outline: none;
+        }
+        .toggle-bg-btn.active { background: #D35400; color: #fff; }
+
+        .toggle-video-btn {
+            position: absolute;
+            left: 110px;
+            bottom: 6px;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Consolas', monospace;
+            z-index: 20;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            user-select: none;
+            letter-spacing: 1px;
+            outline: none;
+        }
+        .toggle-video-btn.active { background: #D35400; color: #fff; }
+
+        /* Contenedor del selector de color */
+        .color-picker-container {
+            position: absolute;
+            left: 6px;
+            bottom: 36px;
+            z-index: 25;
+            background: #fff;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Selector de color para fondo (BG) */
+        .bg-color-picker-container {
+            position: absolute;
+            left: 84px;
+            bottom: 36px;
+            z-index: 25;
+            background: #fff;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        /* Video de fondo: cubrir todo el viewport y quedar detrás del layout */
+        #bg-video {
+            position: fixed;
+            inset: 0; /* top:0; right:0; bottom:0; left:0; */
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* cubrir y recortar si hace falta */
+            z-index: -2; /* detrás del layout */
+            pointer-events: none; /* permitir interacción sobre el layout */
+            filter: saturate(0.98) contrast(1.02); /* sutil ajuste visual opcional */
+            background: #000;
+        }
+
+        /* Animación suave de 'flotación' para el contenedor del modelo 3D */
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        .model-viewer-wrapper {
+            width: 90%;
+            height: 60%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-top: -50px; /* move model-viewer higher */
+            animation: float 6s ease-in-out infinite;
+            will-change: transform;
+            z-index: 2; /* asegurar que quede visible sobre el video */
+        }
     </style>
 </head>
 <body>
     <div class="canva-container">
         <img src="Logo_TESTA_Original.png" alt="Logo Testa" class="logo">
+        <!-- Video de fondo: coloca tu archivo de video en la carpeta del proyecto y renómbralo a "background.mp4" o cambia el src abajo -->
+        <video id="bg-video" autoplay muted loop playsinline>
+            <source src="background.mp4" type="video/mp4">
+            <!-- Recomendado: añade también WebM para mejor compatibilidad: <source src="background.webm" type="video/webm"> -->
+            Tu navegador no soporta video de fondo.
+        </video>
+    <!-- Esquinas tipo marco fotográfico -->
+    <div class="photo-frame-corner top-left"></div>
+    <div class="photo-frame-corner top-right"></div>
+    <div class="photo-frame-corner bottom-left"></div>
+    <div class="photo-frame-corner bottom-right"></div>
         <div class="model-viewer-wrapper">
             <model-viewer 
                 src="3dmodels/GLB_StandQR_DOGGY_SNACKS_DT.glb"
@@ -239,12 +468,32 @@
             <span class="product-subtitle">EXHIBIDOR ACRÍLICO</span>
         </div>
     </div>
-    <div class="toggle-grid-btn">Show MS Indicator</div>
+    <button class="toggle-grid-btn" type="button" aria-pressed="false" title="Mostrar/Ocultar MS Indicator">MS</button>
+    <!-- Botón para activar/desactivar el Frame -->
+    <button class="toggle-frame-btn" type="button" aria-pressed="true" title="Mostrar/Ocultar Frame">F</button>
+    <!-- Botón para mostrar/ocultar el selector de color -->
+    <button class="toggle-color-btn" type="button" aria-pressed="false" title="Cambiar color">🎨</button>
+    <div class="color-picker-container" style="display: none;">
+        <input type="color" id="color-picker" value="#222222">
+    </div>
+    <div class="bg-color-picker-container">
+        <input type="color" id="bg-color-picker" value="#ffffff">
+    </div>
+    <!-- Botones para BG y Video, a la derecha del selector de color -->
+    <button class="toggle-bg-btn" type="button" aria-pressed="false" title="Color de fondo (BG)">BG</button>
+    <button class="toggle-video-btn" type="button" aria-pressed="false" title="Video de fondo (V)">V</button>
     <!-- Dimensiones panel moved inside layout (see DOM) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const layout = document.querySelector('.canva-container');
             const toggleBtn = document.querySelector('.toggle-grid-btn');
+            const toggleFrameBtn = document.querySelector('.toggle-frame-btn');
+            const toggleColorBtn = document.querySelector('.toggle-color-btn');
+            const colorPickerContainer = document.querySelector('.color-picker-container');
+            const colorPicker = document.querySelector('#color-picker');
+            const textElements = document.querySelectorAll('.dim-title, .dim-values, .desc-title, .desc-paragraph, .product-title, .product-subtitle');
+            const frameCorners = document.querySelectorAll('.photo-frame-corner');
+            const dimensionsPanel = document.querySelector('.dimensions-panel');
 
             // Ensure the indicator exists. Create it if missing.
             let indicator = document.querySelector('.mouse-position');
@@ -258,12 +507,21 @@
             let indicatorEnabled = false; // default: disabled per spec
             // Track whether the mouse is currently inside the Layout
             let mouseInside = false;
+            // Estado inicial: Frame activado (gris, visible)
+            let frameEnabled = true;
+            // Estado inicial: Selector de color oculto
+            let colorPickerVisible = false;
 
             // Initialize visuals: indicator hidden, button in inactive (grey) state
             indicator.style.display = 'none';
             if (toggleBtn) {
                 toggleBtn.classList.remove('active');
-                toggleBtn.textContent = 'MS Indicator';
+                toggleBtn.setAttribute('aria-pressed', 'false');
+            }
+            if (toggleFrameBtn) {
+                toggleFrameBtn.classList.remove('active');
+                toggleFrameBtn.setAttribute('aria-pressed', 'true');
+                frameCorners.forEach(el => el.style.display = 'block');
             }
 
             // Mouse listeners on the Layout
@@ -302,12 +560,162 @@
                     indicatorEnabled = !indicatorEnabled;
                     if (indicatorEnabled) {
                         toggleBtn.classList.add('active');
-                        // If mouse is currently inside the layout, show the indicator
+                        toggleBtn.setAttribute('aria-pressed', 'true');
                         if (mouseInside) indicator.style.display = 'block';
                     } else {
                         toggleBtn.classList.remove('active');
-                        // Hide indicator immediately when disabled
+                        toggleBtn.setAttribute('aria-pressed', 'false');
                         indicator.style.display = 'none';
+                    }
+                });
+            }
+
+            // Toggle del Frame
+            if (toggleFrameBtn) {
+                toggleFrameBtn.addEventListener('click', () => {
+                    frameEnabled = !frameEnabled;
+                    if (frameEnabled) {
+                        toggleFrameBtn.classList.remove('active');
+                        toggleFrameBtn.setAttribute('aria-pressed', 'true');
+                        frameCorners.forEach(el => el.style.display = 'block');
+                    } else {
+                        toggleFrameBtn.classList.add('active');
+                        toggleFrameBtn.setAttribute('aria-pressed', 'false');
+                        frameCorners.forEach(el => el.style.display = 'none');
+                    }
+                });
+            }
+
+            // Toggle del Selector de Color
+            if (toggleColorBtn) {
+                toggleColorBtn.addEventListener('click', () => {
+                    colorPickerVisible = !colorPickerVisible;
+                    colorPickerContainer.style.display = colorPickerVisible ? 'block' : 'none';
+                    toggleColorBtn.classList.toggle('active', colorPickerVisible);
+                });
+            }
+
+            // Cambiar el color de los textos y líneas al seleccionar un color
+            if (colorPicker) {
+                colorPicker.addEventListener('input', (event) => {
+                    const selectedColor = event.target.value;
+
+                    // Cambiar color de los textos
+                    textElements.forEach(el => el.style.color = selectedColor);
+
+                    // Cambiar color de las líneas del Frame
+                    frameCorners.forEach(el => {
+                        el.style.borderColor = selectedColor;
+                    });
+
+                    // Cambiar color del borde del bloque de Dimensiones
+                    if (dimensionsPanel) {
+                        dimensionsPanel.style.borderColor = selectedColor;
+                    }
+                });
+            }
+
+            // --- Background color picker (BG) and Video (V) controls ---
+            const toggleBgBtn = document.querySelector('.toggle-bg-btn');
+            const toggleVideoBtn = document.querySelector('.toggle-video-btn');
+            const bgColorPickerContainer = document.querySelector('.bg-color-picker-container');
+            const bgColorPicker = document.querySelector('#bg-color-picker');
+            const bgVideo = document.querySelector('#bg-video');
+
+            let bgPickerVisible = false;
+            // Initial video state: start disabled by default (hidden & paused)
+            let videoEnabled = false;
+            // store previous background color so we can restore it when video is turned off
+            let prevBgColor = window.getComputedStyle(layout).backgroundColor || '#ffffff';
+
+            // Ensure video is paused/hidden on load (default off)
+            if (bgVideo) {
+                try { bgVideo.pause(); } catch (e) {}
+                bgVideo.style.display = 'none';
+            }
+
+            // Init UI state
+            if (bgColorPickerContainer) bgColorPickerContainer.style.display = 'none';
+            if (toggleBgBtn) {
+                toggleBgBtn.classList.remove('active');
+                toggleBgBtn.setAttribute('aria-pressed', 'false');
+            }
+            if (toggleVideoBtn) {
+                toggleVideoBtn.classList.toggle('active', videoEnabled);
+                toggleVideoBtn.setAttribute('aria-pressed', videoEnabled ? 'true' : 'false');
+            }
+
+            // Helper to deactivate video (pause + hide)
+            function deactivateVideo() {
+                if (!bgVideo) return;
+                try { bgVideo.pause(); } catch (e) {}
+                bgVideo.style.display = 'none';
+                videoEnabled = false;
+                if (toggleVideoBtn) {
+                    toggleVideoBtn.classList.remove('active');
+                    toggleVideoBtn.setAttribute('aria-pressed', 'false');
+                }
+            }
+
+            // Helper to activate video (show + play)
+            function activateVideo() {
+                if (!bgVideo) return;
+                // save current background to restore later
+                prevBgColor = layout.style.background || prevBgColor;
+                // show and play
+                bgVideo.style.display = 'block';
+                const playPromise = bgVideo.play && bgVideo.play();
+                if (playPromise && playPromise.catch) playPromise.catch(() => {});
+                videoEnabled = true;
+                if (toggleVideoBtn) {
+                    toggleVideoBtn.classList.add('active');
+                    toggleVideoBtn.setAttribute('aria-pressed', 'true');
+                }
+                // make layout transparent so video is visible behind
+                layout.style.background = 'transparent';
+                // hide the BG color picker if open
+                if (bgColorPickerContainer) bgColorPickerContainer.style.display = 'none';
+                if (toggleBgBtn) { toggleBgBtn.classList.remove('active'); toggleBgBtn.setAttribute('aria-pressed','false'); }
+                bgPickerVisible = false;
+            }
+
+            // BG button toggles color picker and disables video when choosing a color
+            if (toggleBgBtn) {
+                toggleBgBtn.addEventListener('click', () => {
+                    bgPickerVisible = !bgPickerVisible;
+                    if (bgColorPickerContainer) bgColorPickerContainer.style.display = bgPickerVisible ? 'block' : 'none';
+                    toggleBgBtn.classList.toggle('active', bgPickerVisible);
+                    toggleBgBtn.setAttribute('aria-pressed', bgPickerVisible ? 'true' : 'false');
+                    // when opening BG picker, disable video so the color becomes visible
+                    if (bgPickerVisible && videoEnabled) {
+                        deactivateVideo();
+                        // restore previous background (will be overwritten when user picks)
+                        layout.style.background = prevBgColor;
+                    }
+                });
+            }
+
+            // When user picks a background color, apply it and ensure video is off
+            if (bgColorPicker) {
+                bgColorPicker.addEventListener('input', (e) => {
+                    const c = e.target.value;
+                    prevBgColor = c;
+                    layout.style.background = c;
+                    // ensure video is deactivated
+                    if (videoEnabled) deactivateVideo();
+                });
+            }
+
+            // Video toggle button: play/pause and show/hide
+            if (toggleVideoBtn) {
+                toggleVideoBtn.addEventListener('click', () => {
+                    if (!bgVideo) return;
+                    if (videoEnabled) {
+                        // turn off video and restore bg color
+                        deactivateVideo();
+                        layout.style.background = prevBgColor || '#ffffff';
+                    } else {
+                        activateVideo();
                     }
                 });
             }
@@ -340,24 +748,7 @@
             clampPanelPosition();
             window.addEventListener('resize', clampPanelPosition);
 
-            // Position logo by its center at X:25, Y:25 (relative to layout)
-            const logo = layout ? layout.querySelector('.logo') : null;
-            function positionLogoCenter() {
-                if (!layout || !logo) return;
-                // desired center coordinates inside layout
-                const centerX = 25; // px
-                const centerY = 25; // px
-                // get actual size of logo
-                const lw = logo.offsetWidth || 40;
-                const lh = logo.offsetHeight || lw;
-                // compute top-left so that center is at desired coord
-                const leftPx = Math.max(0, centerX - Math.round(lw / 2));
-                const topPx = Math.max(0, centerY - Math.round(lh / 2));
-                logo.style.left = leftPx + 'px';
-                logo.style.top = topPx + 'px';
-            }
-            positionLogoCenter();
-            window.addEventListener('resize', positionLogoCenter);
+            // El logo ahora se posiciona solo con CSS sobre el título
         });
     </script>
 </body>
