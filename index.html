@@ -1,904 +1,153 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Canva Testa - Historia 16:9</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <script type="module" src="https://unpkg.com/@google/model-viewer@2.1.1/dist/model-viewer.min.js"></script>
-    <style>
-        html, body { height: 100%; }
-        body {
-            background: #e0e0e0;
-            margin: 0;
-            min-height: 100vh;
-            /* Eliminar flex y centrar para que el layout ocupe todo el viewport */
-        }
-        .canva-container {
-            position: relative;
-            z-index: 1;
-            /* Base design size (9:16) — we'll scale this to fit the viewport */
-            width: 720px;
-            height: 1280px;
-            max-width: 100%;
-            background: #fff;
-            box-shadow: none;
-            border-radius: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        @media (min-width: 540px) {
-            .canva-container {
-                width: 405px;
-                height: 720px;
-            }
-        }
-        @media (min-width: 800px) {
-            .canva-container {
-                width: 540px;
-                height: 960px;
-            }
-        }
-        @media (min-width: 1000px) {
-            .canva-container {
-                width: 720px;
-                height: 1280px;
-            }
-        }
-        .logo {
-            position: absolute;
-            /* Ubicar el logo centrado sobre el título */
-            left: 12%;
-            top: 30px;
-            width: 48px;
-            max-width: 40px;
-            min-width: 32px;
-            height: auto;
-            z-index: 20;
-            opacity: 0.97;
-        }
-        .model-viewer-wrapper {
-            width: 90%;
-            height: 60%;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            margin-top: -50px; /* move model-viewer higher */
-        }
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            touch-action: none; /* evitar gestos de scroll/touch */
-        }
-        .dimensions-box {
-            position: absolute;
-            left: 40px;
-            bottom: 18px;
-            /* quitar fondo/rectángulo: solo texto */
-            background: transparent;
-            border-radius: 0;
-        }
-        .toggle-grid-btn {
-            position: absolute;
-            left: 6px;
-            bottom: 6px;
-            width: 20px;
-            height: 20px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Consolas', monospace;
-            z-index: 20;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            user-select: none;
-            letter-spacing: 1px;
-            outline: none;
-        }
-        
-        .toggle-grid-btn.active {
-            background: #D35400; /* Naranjo oscuro cuando está activado */
-            color: #fff;
-        }
-        .mouse-position {
-            position: fixed; /* Cambiado a fixed para que siga al mouse sin depender del scroll */
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            font-family: Consolas, monospace;
-            font-size: 12px;
-            padding: 4px 6px;
-            border-radius: 4px;
-            z-index: 15;
-        }
-        /* Dimensiones panel */
-        .dimensions-panel {
-            position: absolute; /* will be positioned relative to .canva-container when moved inside */
-            /* initial values will be overwritten by JS to use percentages for responsiveness */
-            left: 15px;
-            top: 680px;
-            max-height: 100px;
-            /* make the panel a compact square by default; JS will set exact size */
-            width: 120px;
-            height: 120px;
-            max-width: 120px;
-            background: transparent; /* no solid fill */
-            font-family: Consolas, monospace;
-            color: #333;
-            z-index: 12;
-            box-sizing: border-box;
-            padding: 6px 8px;
-            overflow: hidden;
-            pointer-events: none; /* allow mouse events to pass through to the layout */
-            border: 1pt solid #000; /* thin black outline instead of solid fill */
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-        }
-        .dimensions-panel .dim-title {
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 11px; /* un poquito más pequeño */
-            margin-bottom: 6px;
-            color: #111;
-        }
-        .dimensions-panel .dim-values {
-            font-size: 12px; /* reducir tamaño de las medidas para responsividad */
-            color: #444; /* gris oscuro para medidas */
-            line-height: 1.1;
-        }
-        .dimensions-panel .dim-line { margin-bottom: 4px; }
-        .dimensions-panel .dim-label { font-weight: 700; margin-right: 6px; }
-        .dimensions-panel .dim-measure { color: #333; }
-        .description-block {
-            position: absolute;
-            right: 25px;
-            top: 524px;
-            max-width: 180px;
-            font-family: Consolas, monospace;
-            z-index: 12;
-            box-sizing: border-box;
-            pointer-events: none;
-            text-align: right;
-        }
-        .desc-title {
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 11px;
-            margin-bottom: 6px;
-            color: #111;
-            text-align: right;
-        }
-        .desc-paragraph {
-            font-size: 11px;
-            color: #888;
-            line-height: 1.1;
-            max-height: 70px;
-            overflow: hidden;
-            text-align: right;
-        }
-        .product-title-block {
-            position: absolute;
-            left: 25px;
-            top: 75px;
-            z-index: 15;
-            pointer-events: none;
-        }
-        .product-title {
-            font-family: 'Arial Rounded MT Bold', Arial, Helvetica, sans-serif;
-            font-size: 22px;
-            font-weight: bold;
-            color: #222;
-            letter-spacing: 0.5px;
-        }
-        .product-subtitle {
-            font-family: 'Arial Rounded MT BOLD', Arial, Helvetica, sans-serif;
-            font-size: 18px;
-            font-weight: normal;
-            color: #888;
-            letter-spacing: 0.5px;
-            margin-top: 1px;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>testa_canvas</title>
+  <style>
+    /* Fondo gris para toda la página */
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #d0d0d0; /* gris */
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
 
-        /* Marco tipo fotografía: esquinas en L */
-        .photo-frame-corner {
-            position: absolute;
-            width: 32px;
-            height: 32px;
-            pointer-events: none;
-            z-index: 30;
-        }
-        .photo-frame-corner.top-left {
-            top: 12px;
-            left: 12px;
-            border-top: 3px solid #222;
-            border-left: 3px solid #222;
-            border-radius: 6px 0 0 0;
-        }
-        .photo-frame-corner.top-right {
-            top: 12px;
-            right: 12px;
-            border-top: 3px solid #222;
-            border-right: 3px solid #222;
-            border-radius: 0 6px 0 0;
-        }
-        .photo-frame-corner.bottom-left {
-            bottom: 12px;
-            left: 12px;
-            border-bottom: 3px solid #222;
-            border-left: 3px solid #222;
-            border-radius: 0 0 0 6px;
-        }
-        .photo-frame-corner.bottom-right {
-            bottom: 12px;
-            right: 12px;
-            border-bottom: 3px solid #222;
-            border-right: 3px solid #222;
-            border-radius: 0 0 6px 0;
-        }
+    /* Contenedor que usa flex para centrar siempre el lienzo */
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 2vh 2vw; /* margen interior para que no toque bordes muy pequeños */
+    }
 
-        /* Botón toggle para el Frame, igual al de MS */
-        .toggle-frame-btn {
-            position: absolute;
-            left: 32px;
-            bottom: 6px;
-            width: 20px;
-            height: 20px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Consolas', monospace;
-            z-index: 20;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            user-select: none;
-            letter-spacing: 1px;
-            outline: none;
-        }
-        .toggle-frame-btn.active {
-            background: #D35400;
-            color: #fff;
-        }
+    /* Wrapper para controlar el tamaño del canvas manteniendo la proporción vertical
+       NOTA: asumí "posición vertical" como orientación portrait (más alto que ancho).
+       Por eso uso aspecto 9/16 (ancho:alto = 9:16). Si prefieres 16:9 landscape, dímelo
+       y ajusto a 16/9. */
+    .canvas-wrap {
+      /* No forzamos un tamaño absoluto: el JS calculará el máximo que encaje en la ventana */
+      display: block;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
 
-        /* Botón para el selector de color */
-        .toggle-color-btn {
-            position: absolute;
-            left: 58px;
-            bottom: 6px;
-            width: 20px;
-            height: 20px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Consolas', monospace;
-            z-index: 20;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            user-select: none;
-            letter-spacing: 1px;
-            outline: none;
-        }
-        .toggle-color-btn.active {
-            background: #D35400;
-            color: #fff;
-        }
+    /* El canvas no tendrá esquinas redondeadas */
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto; /* el tamaño real lo fija el wrapper / JS */
+      border-radius: 0 !important;
+      background: #ffffff; /* fondo del lienzo blanco, puede cambiarse */
+      image-rendering: optimizeQuality;
+    }
 
-        /* Botón para seleccionar color de fondo (BG) y botón para activar video (V)
-           Colocados a la derecha del selector de color existente */
-        .toggle-bg-btn {
-            position: absolute;
-            left: 84px;
-            bottom: 6px;
-            width: 20px;
-            height: 20px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Consolas', monospace;
-            z-index: 20;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            user-select: none;
-            letter-spacing: 1px;
-            outline: none;
-        }
-        .toggle-bg-btn.active { background: #D35400; color: #fff; }
+    /* Mensaje pequeño cuando el canvas no es soportado */
+    .fallback {
+      color: #333;
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
 
-        .toggle-video-btn {
-            position: absolute;
-            left: 110px;
-            bottom: 6px;
-            width: 20px;
-            height: 20px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Consolas', monospace;
-            z-index: 20;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            user-select: none;
-            letter-spacing: 1px;
-            outline: none;
-        }
-        .toggle-video-btn.active { background: #D35400; color: #fff; }
-
-        /* Contenedor del selector de color */
-        .color-picker-container {
-            position: absolute;
-            left: 6px;
-            bottom: 36px;
-            z-index: 25;
-            background: #fff;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Selector de color para fondo (BG) */
-        .bg-color-picker-container {
-            position: absolute;
-            left: 84px;
-            bottom: 36px;
-            z-index: 25;
-            background: #fff;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            display: none;
-        }
-
-        /* Video de fondo: cubrir todo el viewport y quedar detrás del layout */
-        #bg-video {
-            position: fixed;
-            inset: 0; /* top:0; right:0; bottom:0; left:0; */
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* cubrir y recortar si hace falta */
-            z-index: -2; /* detrás del layout */
-            pointer-events: none; /* permitir interacción sobre el layout */
-            filter: saturate(0.98) contrast(1.02); /* sutil ajuste visual opcional */
-            background: #000;
-        }
-
-        /* Animación suave de 'flotación' para el contenedor del modelo 3D */
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0); }
-        }
-        .model-viewer-wrapper {
-            width: 90%;
-            height: 60%;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            margin-top: -50px; /* move model-viewer higher */
-            animation: float 6s ease-in-out infinite;
-            will-change: transform;
-            z-index: 2; /* asegurar que quede visible sobre el video */
-        }
-        /* Wrapper que permite escalar todo el layout para que quepa en la altura del viewport */
-        .canva-wrapper {
-            width: 100%;
-            display: flex;
-            justify-content: flex-start; /* layout at left */
-            align-items: flex-start; /* align top so full layout is visible */
-            transform-origin: top center;
-            /* ensure wrapper doesn't create its own scrollbars */
-            overflow: hidden;
-        }
-        /* Panel de controles a la derecha del layout */
-        .controls-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 8px;
-            margin-left: 12px;
-            align-items: flex-start;
-            z-index: 40;
-        }
-        /* Force controls inside the controls panel to be non-absolute and stacked */
-        .controls-panel button {
-            position: relative !important;
-            left: auto !important;
-            bottom: auto !important;
-            margin: 4px 0;
-            width: 44px;
-            height: 28px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .controls-panel .color-picker-container,
-        .controls-panel .bg-color-picker-container {
-            position: static !important;
-            display: block !important;
-            background: #fff;
-            padding: 6px;
-            border-radius: 4px;
-        }
-    </style>
+    @media (prefers-reduced-motion: reduce) {
+      .stage { transition: none; }
+    }
+  </style>
 </head>
 <body>
-    <div class="canva-wrapper">
-        <div class="canva-layout-area">
-            <div class="canva-container">
-        <img src="Logo_TESTA_Original.png" alt="Logo Testa" class="logo">
-        <!-- Video de fondo: coloca tu archivo de video en la carpeta del proyecto y renómbralo a "background.mp4" o cambia el src abajo -->
-        <video id="bg-video" autoplay muted loop playsinline>
-            <source src="background.mp4" type="video/mp4">
-            <!-- Recomendado: añade también WebM para mejor compatibilidad: <source src="background.webm" type="video/webm"> -->
-            Tu navegador no soporta video de fondo.
-        </video>
-    <!-- Esquinas tipo marco fotográfico -->
-    <div class="photo-frame-corner top-left"></div>
-    <div class="photo-frame-corner top-right"></div>
-    <div class="photo-frame-corner bottom-left"></div>
-    <div class="photo-frame-corner bottom-right"></div>
-        <div class="model-viewer-wrapper">
-            <model-viewer 
-                src="3dmodels/GLB_StandQR_DOGGY_SNACKS_DT.glb"
-                alt="Modelo 3D"
-                auto-rotate
-                rotation-per-second="80deg"
-                disable-zoom
-                disable-pan
-                interaction-prompt="none"
-                shadow-intensity="1.2"
-                environment-image="environments/studio_country_hall_2k.hdr"
-            ></model-viewer>
-        </div>
-        <div class="dimensions-box">
-            <!-- Aquí puedes agregar texto descriptivo si es necesario -->
-        </div>
-        <!-- Dimensiones del modelo 3D (posicionado INSIDE el Layout) -->
-        <div class="dimensions-panel" aria-label="Dimensiones del modelo">
-            <div class="dim-title">Dimensiones:</div>
-            <div class="dim-values">
-                <div class="dim-line"><span class="dim-label">Alto:</span> <span class="dim-measure">X cm</span></div>
-                <div class="dim-line"><span class="dim-label">Ancho:</span> <span class="dim-measure">X cm</span></div>
-                <div class="dim-line"><span class="dim-label">Largo:</span> <span class="dim-measure">X cm</span></div>
-            </div>
-        </div>
-        <div class="description-block">
-            <div class="desc-title">DESCRIPCIÓN</div>
-            <div class="desc-paragraph">Este es un texto genérico de descripción de producto. Este es un texto genérico de descripción de producto.</div>
-        </div>
-        <div class="product-title-block">
-            <span class="product-title">DOGGY SNACKS</span>
-            <br>
-            <span class="product-subtitle">EXHIBIDOR ACRÍLICO</span>
-        </div>
-            </div>
-        </div>
-
-        <!-- Controles verticales a la derecha del LayOut -->
-        <div class="controls-panel" aria-label="Controles">
-            <button class="toggle-grid-btn" type="button" aria-pressed="false" title="Mostrar/Ocultar MS Indicator">MS</button>
-            <button class="toggle-frame-btn" type="button" aria-pressed="true" title="Mostrar/Ocultar Frame">F</button>
-            <button class="toggle-color-btn" type="button" aria-pressed="false" title="Cambiar color">🎨</button>
-            <div class="color-picker-container" style="display: none;">
-                <input type="color" id="color-picker" value="#222222">
-            </div>
-            <div class="bg-color-picker-container">
-                <input type="color" id="bg-color-picker" value="#ffffff">
-            </div>
-            <button class="toggle-bg-btn" type="button" aria-pressed="false" title="Color de fondo (BG)">BG</button>
-            <button class="toggle-video-btn" type="button" aria-pressed="false" title="Video de fondo (V)">V</button>
-            <button class="export-video-btn" type="button" title="Exportar video (10s)">Export</button>
-        </div>
+  <div class="stage">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="testa_canvas" aria-label="Lienzo testa_canvas">Tu navegador no soporta canvas.</canvas>
+      <div class="fallback">Lienzo: <strong id="sizeLabel">--</strong></div>
     </div>
-    <!-- Dimensiones panel moved inside layout (see DOM) -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const layout = document.querySelector('.canva-container');
-            const toggleBtn = document.querySelector('.toggle-grid-btn');
-            const toggleFrameBtn = document.querySelector('.toggle-frame-btn');
-            const toggleColorBtn = document.querySelector('.toggle-color-btn');
-            const colorPickerContainer = document.querySelector('.color-picker-container');
-            const colorPicker = document.querySelector('#color-picker');
-            const textElements = document.querySelectorAll('.dim-title, .dim-values, .desc-title, .desc-paragraph, .product-title, .product-subtitle');
-            const frameCorners = document.querySelectorAll('.photo-frame-corner');
-            const dimensionsPanel = document.querySelector('.dimensions-panel');
+  </div>
 
-            // Ensure the indicator exists. Create it if missing.
-            let indicator = document.querySelector('.mouse-position');
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.className = 'mouse-position';
-                document.body.appendChild(indicator);
-            }
+  <script>
+    (function() {
+      // Configuración: relación de aspecto.
+      // Asunción: "posición vertical" -> portrait (ancho:alto = 9:16)
+      // Si quieres landscape (16:9), cambia ratio = 16/9.
+      const ratio = 9 / 16; // ancho / alto
 
-            // State: whether the MS Indicator feature is enabled (user toggled)
-            let indicatorEnabled = false; // default: disabled per spec
-            // Track whether the mouse is currently inside the Layout
-            let mouseInside = false;
-            // Estado inicial: Frame activado (gris, visible)
-            let frameEnabled = true;
-            // Estado inicial: Selector de color oculto
-            let colorPickerVisible = false;
+      const canvas = document.getElementById('testa_canvas');
+      const wrap = document.getElementById('canvasWrap');
+      const sizeLabel = document.getElementById('sizeLabel');
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
 
-            // Initialize visuals: indicator hidden, button in inactive (grey) state
-            indicator.style.display = 'none';
-            if (toggleBtn) {
-                toggleBtn.classList.remove('active');
-                toggleBtn.setAttribute('aria-pressed', 'false');
-            }
-            if (toggleFrameBtn) {
-                toggleFrameBtn.classList.remove('active');
-                toggleFrameBtn.setAttribute('aria-pressed', 'true');
-                frameCorners.forEach(el => el.style.display = 'block');
-            }
+      function resizeCanvasToFit() {
+        // Espacio disponible en viewport (con pequeño padding, 95% para evitar tocar bordes)
+        const availW = Math.max(100, window.innerWidth * 0.95);
+        const availH = Math.max(100, window.innerHeight * 0.95);
 
-            // Mouse listeners on the Layout
-            if (layout) {
-                layout.addEventListener('mousemove', (e) => {
-                    mouseInside = true;
-                    if (!indicatorEnabled) return; // only show/update when enabled
+        // Calcular el tamaño máximo que cabe manteniendo ratio
+        // si availW / availH > ratio significa que hay relativamente más ancho -> usar altura completa
+        let width, height;
+        if (availW / availH > ratio) {
+          // limit by height
+          height = availH;
+          width = Math.round(height * ratio);
+        } else {
+          // limit by width
+          width = availW;
+          height = Math.round(width / ratio);
+        }
 
-                    const rect = layout.getBoundingClientRect();
-                    const x = Math.round(e.clientX - rect.left);
-                    const y = Math.round(e.clientY - rect.top);
-                    indicator.textContent = `X: ${x}, Y: ${y}`;
+        // Aplicar tamaño CSS al wrapper para que el canvas escale proporcionalmente
+        wrap.style.width = width + 'px';
+        wrap.style.height = height + 'px';
 
-                    const offset = 12;
-                    // indicator is fixed, so use client coords
-                    indicator.style.top = `${e.clientY + offset}px`;
-                    indicator.style.left = `${e.clientX + offset}px`;
-                    indicator.style.display = 'block';
-                });
+        // Ajustes de pixeles reales para alta densidad de píxeles
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
 
-                layout.addEventListener('mouseenter', () => {
-                    mouseInside = true;
-                    if (indicatorEnabled) indicator.style.display = 'block';
-                });
+        // Escalar contexto para mapear coordenadas CSS a píxeles físicos
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          // Dibujar un ejemplo (puedes eliminar o modificar): marco sutil y texto de ejemplo
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = '#f6f6f6';
+          ctx.fillRect(0, 0, width, height);
 
-                layout.addEventListener('mouseleave', () => {
-                    mouseInside = false;
-                    // When leaving layout, hide the indicator visually, but keep the enabled state
-                    indicator.style.display = 'none';
-                });
-            }
+          // Dibujar una guía: un rectángulo dentro del lienzo
+          ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(0.5, 0.5, width-1, height-1);
 
-            // Toggle button behavior: enable/disable the MS Indicator feature
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    indicatorEnabled = !indicatorEnabled;
-                    if (indicatorEnabled) {
-                        toggleBtn.classList.add('active');
-                        toggleBtn.setAttribute('aria-pressed', 'true');
-                        if (mouseInside) indicator.style.display = 'block';
-                    } else {
-                        toggleBtn.classList.remove('active');
-                        toggleBtn.setAttribute('aria-pressed', 'false');
-                        indicator.style.display = 'none';
-                    }
-                });
-            }
+          // Texto centrado que indica tamaño
+          ctx.fillStyle = '#333';
+          ctx.font = Math.max(12, Math.floor(Math.min(width, height) * 0.05)) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('testa_canvas — ' + width + '×' + height + ' px', width / 2, height / 2);
+        }
 
-            // Toggle del Frame
-            if (toggleFrameBtn) {
-                toggleFrameBtn.addEventListener('click', () => {
-                    frameEnabled = !frameEnabled;
-                    if (frameEnabled) {
-                        toggleFrameBtn.classList.remove('active');
-                        toggleFrameBtn.setAttribute('aria-pressed', 'true');
-                        frameCorners.forEach(el => el.style.display = 'block');
-                    } else {
-                        toggleFrameBtn.classList.add('active');
-                        toggleFrameBtn.setAttribute('aria-pressed', 'false');
-                        frameCorners.forEach(el => el.style.display = 'none');
-                    }
-                });
-            }
+        sizeLabel.textContent = width + ' × ' + height + ' CSS px (DPR ' + dpr + ')';
+      }
 
-            // Toggle del Selector de Color
-            if (toggleColorBtn) {
-                toggleColorBtn.addEventListener('click', () => {
-                    colorPickerVisible = !colorPickerVisible;
-                    colorPickerContainer.style.display = colorPickerVisible ? 'block' : 'none';
-                    toggleColorBtn.classList.toggle('active', colorPickerVisible);
-                });
-            }
+      // Debounce resize to avoid demasiadas repintadas
+      let resizeTimer = null;
+      function handleResize() {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          resizeCanvasToFit();
+          resizeTimer = null;
+        }, 60);
+      }
 
-            // Cambiar el color de los textos y líneas al seleccionar un color
-            if (colorPicker) {
-                colorPicker.addEventListener('input', (event) => {
-                    const selectedColor = event.target.value;
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
 
-                    // Cambiar color de los textos
-                    textElements.forEach(el => el.style.color = selectedColor);
+      // Inicializar
+      resizeCanvasToFit();
 
-                    // Cambiar color de las líneas del Frame
-                    frameCorners.forEach(el => {
-                        el.style.borderColor = selectedColor;
-                    });
-
-                    // Cambiar color del borde del bloque de Dimensiones
-                    if (dimensionsPanel) {
-                        dimensionsPanel.style.borderColor = selectedColor;
-                    }
-                });
-            }
-
-            // --- Background color picker (BG) and Video (V) controls ---
-            const toggleBgBtn = document.querySelector('.toggle-bg-btn');
-            const toggleVideoBtn = document.querySelector('.toggle-video-btn');
-            const bgColorPickerContainer = document.querySelector('.bg-color-picker-container');
-            const bgColorPicker = document.querySelector('#bg-color-picker');
-            const bgVideo = document.querySelector('#bg-video');
-
-            let bgPickerVisible = false;
-            // Initial video state: start disabled by default (hidden & paused)
-            let videoEnabled = false;
-            // store previous background color so we can restore it when video is turned off
-            let prevBgColor = window.getComputedStyle(layout).backgroundColor || '#ffffff';
-
-            // Ensure video is paused/hidden on load (default off)
-            if (bgVideo) {
-                try { bgVideo.pause(); } catch (e) {}
-                bgVideo.style.display = 'none';
-            }
-
-            // Init UI state
-            if (bgColorPickerContainer) bgColorPickerContainer.style.display = 'none';
-            if (toggleBgBtn) {
-                toggleBgBtn.classList.remove('active');
-                toggleBgBtn.setAttribute('aria-pressed', 'false');
-            }
-            if (toggleVideoBtn) {
-                toggleVideoBtn.classList.toggle('active', videoEnabled);
-                toggleVideoBtn.setAttribute('aria-pressed', videoEnabled ? 'true' : 'false');
-            }
-
-            // Helper to deactivate video (pause + hide)
-            function deactivateVideo() {
-                if (!bgVideo) return;
-                try { bgVideo.pause(); } catch (e) {}
-                bgVideo.style.display = 'none';
-                videoEnabled = false;
-                if (toggleVideoBtn) {
-                    toggleVideoBtn.classList.remove('active');
-                    toggleVideoBtn.setAttribute('aria-pressed', 'false');
-                }
-            }
-
-            // Helper to activate video (show + play)
-            function activateVideo() {
-                if (!bgVideo) return;
-                // save current background to restore later
-                prevBgColor = layout.style.background || prevBgColor;
-                // show and play
-                bgVideo.style.display = 'block';
-                const playPromise = bgVideo.play && bgVideo.play();
-                if (playPromise && playPromise.catch) playPromise.catch(() => {});
-                videoEnabled = true;
-                if (toggleVideoBtn) {
-                    toggleVideoBtn.classList.add('active');
-                    toggleVideoBtn.setAttribute('aria-pressed', 'true');
-                }
-                // make layout transparent so video is visible behind
-                layout.style.background = 'transparent';
-                // hide the BG color picker if open
-                if (bgColorPickerContainer) bgColorPickerContainer.style.display = 'none';
-                if (toggleBgBtn) { toggleBgBtn.classList.remove('active'); toggleBgBtn.setAttribute('aria-pressed','false'); }
-                bgPickerVisible = false;
-            }
-
-            // BG button toggles color picker and disables video when choosing a color
-            if (toggleBgBtn) {
-                toggleBgBtn.addEventListener('click', () => {
-                    bgPickerVisible = !bgPickerVisible;
-                    if (bgColorPickerContainer) bgColorPickerContainer.style.display = bgPickerVisible ? 'block' : 'none';
-                    toggleBgBtn.classList.toggle('active', bgPickerVisible);
-                    toggleBgBtn.setAttribute('aria-pressed', bgPickerVisible ? 'true' : 'false');
-                    // when opening BG picker, disable video so the color becomes visible
-                    if (bgPickerVisible && videoEnabled) {
-                        deactivateVideo();
-                        // restore previous background (will be overwritten when user picks)
-                        layout.style.background = prevBgColor;
-                    }
-                });
-            }
-
-            // When user picks a background color, apply it and ensure video is off
-            if (bgColorPicker) {
-                bgColorPicker.addEventListener('input', (e) => {
-                    const c = e.target.value;
-                    prevBgColor = c;
-                    layout.style.background = c;
-                    // ensure video is deactivated
-                    if (videoEnabled) deactivateVideo();
-                });
-            }
-
-            // Video toggle button: play/pause and show/hide
-            if (toggleVideoBtn) {
-                toggleVideoBtn.addEventListener('click', () => {
-                    if (!bgVideo) return;
-                    if (videoEnabled) {
-                        // turn off video and restore bg color
-                        deactivateVideo();
-                        layout.style.background = prevBgColor || '#ffffff';
-                    } else {
-                        activateVideo();
-                    }
-                });
-            }
-
-            // Reposition elements to ensure they keep relative positions across devices
-            const panel = layout ? layout.querySelector('.dimensions-panel') : null;
-
-            // Set positions responsively based on a reference design size (refW x refH).
-            // This computes percentages from reference pixel positions so elements keep
-            // their relative placement regardless of actual device size.
-            function setResponsivePositions() {
-                if (!layout) return;
-                const refW = 720; // reference design width used in media queries
-                const refH = 1280; // reference design height used in media queries
-                const rect = layout.getBoundingClientRect();
-                const w = Math.max(1, rect.width);
-                const h = Math.max(1, rect.height);
-                const pxToPercentX = px => Math.min(100, (px / refW) * 100);
-                const pxToPercentY = px => Math.min(100, (px / refH) * 100);
-
-                // product title block (reference: left:25px, top:75px)
-                const product = layout.querySelector('.product-title-block');
-                if (product) {
-                    product.style.left = pxToPercentX(25) + '%';
-                    product.style.top = pxToPercentY(75) + '%';
-                }
-
-                // description block (reference: right:25px, top:524px)
-                const desc = layout.querySelector('.description-block');
-                if (desc) {
-                    desc.style.right = pxToPercentX(25) + '%';
-                    desc.style.top = pxToPercentY(524) + '%';
-                }
-
-                // photo-frame corners (reference offset: 12px)
-                const tl = layout.querySelector('.photo-frame-corner.top-left');
-                const tr = layout.querySelector('.photo-frame-corner.top-right');
-                const bl = layout.querySelector('.photo-frame-corner.bottom-left');
-                const br = layout.querySelector('.photo-frame-corner.bottom-right');
-                const cornerOffsetX = pxToPercentX(12);
-                const cornerOffsetY = pxToPercentY(12);
-                if (tl) { tl.style.left = cornerOffsetX + '%'; tl.style.top = cornerOffsetY + '%'; }
-                if (tr) { tr.style.right = cornerOffsetX + '%'; tr.style.top = cornerOffsetY + '%'; }
-                if (bl) { bl.style.left = cornerOffsetX + '%'; bl.style.bottom = cornerOffsetY + '%'; }
-                if (br) { br.style.right = cornerOffsetX + '%'; br.style.bottom = cornerOffsetY + '%'; }
-
-                // logo: keep its left percentage but adjust top relative to ref height (original top:30px)
-                const logo = layout.querySelector('.logo');
-                if (logo) logo.style.top = pxToPercentY(30) + '%';
-            }
-
-            // Reposition dimensions panel to ensure it stays inside the layout
-            function clampPanelPosition() {
-                if (!layout || !panel) return;
-                // Use reference pixel positions so behavior matches the responsive placement
-                const desiredLeftPx = 35; // reference left in px
-                const desiredTopPx = 780; // reference top in px
-                const panelH = panel.offsetHeight || 100;
-                const maxTopPx = Math.max(0, layout.clientHeight - panelH - 10);
-                const clampedTopPx = Math.min(desiredTopPx, maxTopPx);
-
-                // compute left/top as percentages so the panel scales with layout
-                const leftPercent = Math.min( (desiredLeftPx / layout.clientWidth) * 100, 90 );
-                const topPercent = (clampedTopPx / layout.clientHeight) * 100;
-                panel.style.left = leftPercent + '%';
-                panel.style.top = topPercent + '%';
-
-                // set panel size responsively to keep it compact and more square
-                const maxSquare = Math.min(120, Math.floor(layout.clientWidth * 0.3));
-                const sizePx = Math.max(60, maxSquare); // keep a minimum usable size
-                panel.style.width = sizePx + 'px';
-                // make the height slightly smaller than the width (keep width unchanged)
-                const heightPx = Math.max(40, Math.floor(sizePx * 0.75));
-                panel.style.height = heightPx + 'px';
-            }
-            // Run once and on resize: set responsive positions first, then clamp panel
-            setResponsivePositions();
-            clampPanelPosition();
-            window.addEventListener('resize', () => {
-                setResponsivePositions();
-                clampPanelPosition();
-            });
-
-            // Fit the layout vertically into the viewport by scaling the wrapper when needed
-            // Use visualViewport (when available) because mobile Safari adjusts the visual
-            // viewport when the address/toolbars are visible.
-            function fitLayoutToViewport() {
-                const wrapper = document.querySelector('.canva-wrapper');
-                const layoutEl = document.querySelector('.canva-container');
-                if (!wrapper || !layoutEl) return;
-
-                // Use offsetHeight (stable) for the layout size
-                const layoutH = layoutEl.offsetHeight || layoutEl.getBoundingClientRect().height;
-                const layoutW = layoutEl.offsetWidth || layoutEl.getBoundingClientRect().width;
-
-                // Prefer visualViewport height when available (handles Safari chrome)
-                const vH = (window.visualViewport && window.visualViewport.height) || window.innerHeight || document.documentElement.clientHeight;
-
-                // compute scale so that the layout height fits into the visible viewport
-                const scale = Math.min(1, Math.max(0.5, vH / layoutH));
-
-                // Apply transform to the layout element so controls remain unscaled
-                layoutEl.style.transformOrigin = 'top left';
-                layoutEl.style.transform = `scale(${scale})`;
-                // set the container around the layout to reserve the scaled space
-                const area = document.querySelector('.canva-layout-area');
-                if (area) {
-                    area.style.width = (layoutW * scale) + 'px';
-                    area.style.height = (layoutH * scale) + 'px';
-                }
-
-                // When scaled down, hide page scroll to lock the view. On iOS some extra
-                // adjustments are needed: set html/body height to 100% and overflow hidden.
-                if (scale < 1) {
-                    document.documentElement.style.height = '100%';
-                    document.body.style.height = '100%';
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    document.documentElement.style.height = '';
-                    document.body.style.height = '';
-                    document.body.style.overflow = '';
-                }
-            }
-
-            // Call on load and when the viewport changes. Also listen to visualViewport resize
-            fitLayoutToViewport();
-            window.addEventListener('resize', fitLayoutToViewport);
-            window.addEventListener('orientationchange', () => setTimeout(fitLayoutToViewport, 120));
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', fitLayoutToViewport);
-                window.visualViewport.addEventListener('scroll', fitLayoutToViewport);
-            }
-
-            // El logo ahora se posiciona solo con CSS sobre el título
-        });
-    </script>
+      // Exponer función en window para posibles pruebas manuales
+      window.responsiveTestaCanvas = resizeCanvasToFit;
+    })();
+  </script>
 </body>
 </html>
