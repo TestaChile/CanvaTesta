@@ -51,16 +51,41 @@
       font-size: 0.9rem;
     }
 
+    /* Toggle pequeño en la esquina superior izquierda */
+    #colorToggle {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      width: 15px;
+      height: 15px;
+      padding: 0;
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Consolas, monospace;
+      font-weight: 700;
+      font-size: 12px; /* ajuste para que la letra quede centrada en 15x15 */
+      line-height: 1;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.9);
+      color: #111;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .stage { transition: none; }
     }
   </style>
 </head>
 <body>
+  <button id="colorToggle" aria-pressed="false" title="Cambiar color del lienzo">C</button>
   <div class="stage">
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="testa_canvas" aria-label="Lienzo testa_canvas">Tu navegador no soporta canvas.</canvas>
-      <div class="fallback">Lienzo: <strong id="sizeLabel">--</strong></div>
+      <!-- fallback eliminado: no se muestra el tamaño -->
     </div>
   </div>
 
@@ -71,10 +96,14 @@
       // Si quieres landscape (16:9), cambia ratio = 16/9.
       const ratio = 9 / 16; // ancho / alto
 
-      const canvas = document.getElementById('testa_canvas');
-      const wrap = document.getElementById('canvasWrap');
-      const sizeLabel = document.getElementById('sizeLabel');
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const canvas = document.getElementById('testa_canvas');
+  const wrap = document.getElementById('canvasWrap');
+  const toggle = document.getElementById('colorToggle');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  // Colores entre los que alterna el toggle (puedes cambiarlos)
+  const colors = ['#ffffff', '#e6f7ff']; // blanco y azul muy claro
+  let currentColorIndex = 0;
 
       function resizeCanvasToFit() {
         // Espacio disponible en viewport (con pequeño padding, 95% para evitar tocar bordes)
@@ -110,23 +139,18 @@
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           // Dibujar un ejemplo (puedes eliminar o modificar): marco sutil y texto de ejemplo
           ctx.clearRect(0, 0, width, height);
-          ctx.fillStyle = '#f6f6f6';
+          // Usar el color seleccionado para el fondo del canvas
+          ctx.fillStyle = colors[currentColorIndex] || '#ffffff';
           ctx.fillRect(0, 0, width, height);
 
-          // Dibujar una guía: un rectángulo dentro del lienzo
+          // Dibujar una guía: un rectángulo sutil dentro del lienzo
           ctx.strokeStyle = 'rgba(0,0,0,0.08)';
           ctx.lineWidth = 1;
           ctx.strokeRect(0.5, 0.5, width-1, height-1);
-
-          // Texto centrado que indica tamaño
-          ctx.fillStyle = '#333';
-          ctx.font = Math.max(12, Math.floor(Math.min(width, height) * 0.05)) + 'px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('testa_canvas — ' + width + '×' + height + ' px', width / 2, height / 2);
         }
 
-        sizeLabel.textContent = width + ' × ' + height + ' CSS px (DPR ' + dpr + ')';
+        // actualizar background CSS (por si el navegador no pinta inmediatamente)
+        canvas.style.background = colors[currentColorIndex];
       }
 
       // Debounce resize to avoid demasiadas repintadas
@@ -144,6 +168,25 @@
 
       // Inicializar
       resizeCanvasToFit();
+      // Toggle: alterna el color del lienzo
+      function toggleCanvasColor() {
+        currentColorIndex = (currentColorIndex + 1) % colors.length;
+        // aplicar css y redibujar
+        canvas.style.background = colors[currentColorIndex];
+        resizeCanvasToFit();
+        if (toggle) toggle.setAttribute('aria-pressed', currentColorIndex ? 'true' : 'false');
+      }
+
+      if (toggle) {
+        toggle.addEventListener('click', toggleCanvasColor);
+        // permitir activar con tecla Enter/Space por accesibilidad
+        toggle.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleCanvasColor();
+          }
+        });
+      }
 
       // Exponer función en window para posibles pruebas manuales
       window.responsiveTestaCanvas = resizeCanvasToFit;
