@@ -51,11 +51,18 @@
       font-size: 0.9rem;
     }
 
-    /* Toggle pequeño en la esquina superior izquierda */
-    #colorToggle {
+    /* Controles (botones) agrupados en la esquina superior izquierda */
+    #controls {
       position: fixed;
       top: 8px;
       left: 8px;
+      display: inline-flex;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    /* Estilo común de botones pequeños */
+    #controls button {
       width: 15px;
       height: 15px;
       padding: 0;
@@ -73,7 +80,10 @@
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      border-radius: 4px; /* ligera redondez en esquinas */
     }
+
+    /* (El botón fullscreen usa el estilo común en #controls button) */
 
     @media (prefers-reduced-motion: reduce) {
       .stage { transition: none; }
@@ -81,8 +91,11 @@
   </style>
 </head>
 <body>
-  <button id="colorToggle" aria-label="Seleccionar color del lienzo" title="Seleccionar color del lienzo">C</button>
-  <input id="colorPicker" type="color" value="#ffffff" style="display:none;" aria-hidden="true" />
+  <div id="controls">
+    <button id="colorToggle" aria-label="Seleccionar color del lienzo" title="Seleccionar color del lienzo">C</button>
+    <input id="colorPicker" type="color" value="#ffffff" style="display:none;" aria-hidden="true" />
+    <button id="fullscreenBtn" aria-label="Pantalla completa" title="Ver en pantalla completa">P</button>
+  </div>
   <div class="stage">
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="testa_canvas" aria-label="Lienzo testa_canvas">Tu navegador no soporta canvas.</canvas>
@@ -101,10 +114,17 @@
   const wrap = document.getElementById('canvasWrap');
   const toggle = document.getElementById('colorToggle');
   const colorPicker = document.getElementById('colorPicker');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
   const dpr = Math.max(1, window.devicePixelRatio || 1);
 
   // Color actual del lienzo (value por defecto del input)
   let currentColor = (colorPicker && colorPicker.value) || '#ffffff';
+
+  // Detectar dispositivo táctil para modificar comportamiento del botón C
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+  // Paleta predefinida para dispositivos táctiles (al presionar cicla colores)
+  const touchPalette = ['#ffffff', '#e6f7ff', '#ffe6e6', '#e6ffe6', '#fff7e6'];
+  let touchIndex = 0;
 
       function resizeCanvasToFit() {
         // Espacio disponible en viewport (con pequeño padding, 95% para evitar tocar bordes)
@@ -169,21 +189,84 @@
 
       // Inicializar
       resizeCanvasToFit();
-      // Abrir selector de color nativo al pulsar el botón
-      function openColorPicker() {
-        if (colorPicker) colorPicker.click();
+      // Comportamiento del botón C:
+      // - En dispositivos no-táctiles abre el selector nativo
+      // - En dispositivos táctiles cicla entre colores predefinidos para evitar abrir el picker problemático
+      function handleColorButton() {
+        if (isTouch) {
+          touchIndex = (touchIndex + 1) % touchPalette.length;
+          currentColor = touchPalette[touchIndex];
+          if (colorPicker) colorPicker.value = currentColor;
+          resizeCanvasToFit();
+        } else {
+          if (colorPicker) colorPicker.click();
+        }
       }
 
       if (toggle) {
-        toggle.addEventListener('click', openColorPicker);
+        toggle.addEventListener('click', handleColorButton);
         // permitir activar con tecla Enter/Space por accesibilidad
         toggle.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            openColorPicker();
+            handleColorButton();
           }
         });
       }
+
+      // --- Fullscreen control ---
+      function isFullscreen() {
+        return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+      }
+
+      function requestFullscreen(el) {
+        if (!el) el = document.documentElement;
+        if (el.requestFullscreen) return el.requestFullscreen();
+        if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+        if (el.msRequestFullscreen) return el.msRequestFullscreen();
+        return Promise.reject(new Error('Fullscreen API no soportada'));
+      }
+
+      function exitFullscreen() {
+        if (document.exitFullscreen) return document.exitFullscreen();
+        if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+        if (document.msExitFullscreen) return document.msExitFullscreen();
+        return Promise.reject(new Error('Fullscreen API no soportada'));
+      }
+
+      function toggleFullscreen() {
+        if (isFullscreen()) {
+          exitFullscreen().catch(() => {});
+        } else {
+          // Pedimos fullscreen sobre el wrapper para mantener proporción
+          requestFullscreen(wrap).catch(() => {
+            // como fallback, sobre el documentElement
+            requestFullscreen(document.documentElement).catch(() => {});
+          });
+        }
+      }
+
+      // Actualiza el estado del botón cuando cambia fullscreen
+      function onFullscreenChange() {
+        const fs = isFullscreen();
+        if (fullscreenBtn) fullscreenBtn.setAttribute('aria-pressed', fs ? 'true' : 'false');
+        // repintar canvas para ajustar tamaño en fullscreen
+        setTimeout(resizeCanvasToFit, 60);
+      }
+
+      if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        fullscreenBtn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleFullscreen();
+          }
+        });
+      }
+
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+      document.addEventListener('msfullscreenchange', onFullscreenChange);
 
       // Cuando el usuario selecciona un color, actualizar y repintar
       if (colorPicker) {
